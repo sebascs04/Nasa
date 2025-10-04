@@ -31,7 +31,7 @@ const Home = () => {
                                 <p className="mt-4 text-lg text-gray-300 max-w-xl font-roboto"> Your portal to scientific exploration of exoplanets.</p>
 
                                 <div className="mt-8">
-                                    <Link to="/explore"  className="tracking-wide inline-block border-2 border-[#00CC99] text-[#00CC99] font-bold py-3 px-8 rounded-md hover:bg-[#00CC99] hover:text-[#0A141A] transition-all duration-300 font-roboto">
+                                    <Link to="/dataexploration"  className="tracking-wide inline-block border-2 border-[#00CC99] text-[#00CC99] font-bold py-3 px-8 rounded-md hover:bg-[#00CC99] hover:text-[#0A141A] transition-all duration-300 font-roboto">
                                         START YOUR EXPLORATION
                                     </Link>
                                 </div>
@@ -76,7 +76,7 @@ const Home = () => {
 
                                 {/* Botones */}
                                 <div className="w-full md:w-2/5 flex items-center gap-6">
-                                    <Link to="/explore"
+                                    <Link to="/dataexploration"
                                         className="flex-grow h-18 flex items-center justify-center space-x-4 border-2 border-[#00CC99] rounded-lg p-6 text-[#00CC99] hover:bg-[#00CC99] hover:text-[#0A141A] transition-all duration-300">
                                         <span className="text-2xl font-medium font-montserrat"> ANALYZE </span>
                                         <LineChart className="h-8 w-8" />

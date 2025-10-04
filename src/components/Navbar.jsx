@@ -1,8 +1,17 @@
-import { Link } from 'react-router-dom';
+import { Link,NavLink } from 'react-router-dom';
 import { Rocket, LineChart, Orbit } from 'lucide-react';
 import logoImage from '../assets/logo.png'; 
 
 const Navbar = () => {
+
+    const getNavLinkClass = ({ isActive }) => {
+        const baseClasses = "py-2 px-4 rounded-md transition-all duration-300 font-medium ";
+        return isActive 
+            // Estilo para el link ACTIVO (como un botón)
+            ? `${baseClasses} bg-[#00CC99] text-[#0A141A]` 
+            // Estilo para los links INACTIVOS
+            : `${baseClasses} text-gray-300 hover:text-[#00CC99] hover:bg-white/5`;
+    };
 
     return (
         <div className='mt-10 w-full px-4'>
@@ -10,25 +19,25 @@ const Navbar = () => {
                 <header className="sticky top-0 z-50 px-8 py-3 bg-[#141E2A]/80 backdrop-blur-sm">
                     <nav className="flex items-center justify-between">
                         {/* Bloque 1: Logo (se va a la izquierda) */}
-                        <Link to="/" className="flex items-center space-x-2">
+                        <NavLink to="/" className="flex items-center space-x-2">
                             <img src={logoImage} alt="ExoVision Logo" className="h-12 w-auto pr-2" />
-                            <span className=" font-semibold text-white hidden sm:block">ExoVision</span>
-                        </Link>
+                            <span className=" font-semibold text-white hidden sm:block">ExoScope</span>
+                        </NavLink>
 
                         {/* Bloque 2: Links (se queda en el centro) */}
                         {/* AÑADIMOS gap-x-8 PARA CREAR ESPACIO HORIZONTAL ENTRE LOS LINKS */}
-                        <div className="flex gap-x-13">
-                            <Link to="/" className="hover:text-[#00CC99] transition-colors">Home</Link>
-                            <Link to="/explore" className="hover:text-[#00CC99] transition-colors">Data Exploration</Link>
-                            <Link to="/classify" className="hover:text-[#00CC99] transition-colors">Classification</Link>
-                            <Link to="/curves" className="hover:text-[#00CC99] transition-colors">Light Curves</Link>
-                            <Link to="/results" className="hover:text-[#00CC99] transition-colors">Results</Link>
+                        <div className="flex gap-x-5">
+                            <NavLink to="/" className={getNavLinkClass}>Home</NavLink>
+                            <NavLink to="/dataexploration" className={getNavLinkClass}>Data Exploration</NavLink>
+                            <NavLink to="/classify" className={getNavLinkClass}>Classification</NavLink>
+                            <NavLink to="/curves" className={getNavLinkClass}>Light Curves</NavLink>
+                            <NavLink to="/results" className={getNavLinkClass}>Results</NavLink>
                         </div>
 
                         {/* Bloque 3: Botón de Login (se va a la derecha) */}
-                        <Link to="/login" className="bg-[#00CC99] text-[#0A141A] font-bold py-2 px-5 rounded-md hover:bg-opacity-90 transition-all">
+                        <NavLink to="/login" className={getNavLinkClass}>
                             Log In
-                        </Link>
+                        </NavLink>
                     </nav>
                 </header>
             </div>

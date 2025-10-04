@@ -1,8 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-
-// --- Importa tus páginas ---
 import Home from "./pages/Home";
+import DataExploration from './pages/DataExploration';
 
 // --- Componentes de Marcador de Posición (Placeholders) ---
 // Puedes mover estos a sus propios archivos en la carpeta /pages cuando los construyas.
@@ -17,7 +16,6 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
-const DataExploration = () => <PlaceholderPage title="Data Exploration" />;
 const Classification = () => <PlaceholderPage title="Classification" />;
 const LightCurves = () => <PlaceholderPage title="Light Curves" />;
 const Results = () => <PlaceholderPage title="Results" />;
@@ -37,7 +35,7 @@ function App() {
         <Route path="/" element={<Home />} />
 
         {/* Rutas para las demás secciones de tu aplicación */}
-        <Route path="/explore" element={<DataExploration />} />
+        <Route path="/dataexploration" element={<DataExploration />} />
         <Route path="/classify" element={<Classification />} />
         <Route path="/curves" element={<LightCurves />} />
         <Route path="/results" element={<Results />} />
