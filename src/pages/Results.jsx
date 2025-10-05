@@ -3,54 +3,42 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cart
 import { ChevronDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
-// --- DATOS SIMULADOS AMPLIADOS ---
-// Ahora tenemos un objeto que contiene las métricas para CADA modelo.
 const allMetricsData = {
-    'LightGBM': { accuracy: '98.7%', precision: '98.7%', recall: '96.5%', auc: '0.99', f1Score: '0.97' },
-    'NN': { accuracy: '96.2%', precision: '94.1%', recall: '97.8%', auc: '0.98', f1Score: '0.96' },
-    'Ensemble': { accuracy: '99.1%', precision: '99.0%', recall: '98.5%', auc: '0.99', f1Score: '0.99' },
-    'SVM': { accuracy: '94.5%', precision: '92.3%', recall: '93.1%', auc: '0.95', f1Score: '0.92' },
-    'Random Forest': { accuracy: '97.8%', precision: '96.9%', recall: '95.8%', auc: '0.98', f1Score: '0.96' },
+    'RANDOM FOREST': { accuracy: '97.8%', precision: '96.9%', recall: '95.8%', auc: '0.98', f1Score: '0.96' },
+    'XGBOOST': { accuracy: '98.5%', precision: '98.2%', recall: '96.1%', auc: '0.99', f1Score: '0.97' },
+    'LIGHTGBM': { accuracy: '98.7%', precision: '98.7%', recall: '96.5%', auc: '0.99', f1Score: '0.97' },
 };
 
-// 1. AMPLIAMOS LOS DATOS SIMULADOS: Añadimos los datos de la matriz para cada modelo
 const allConfusionMatrixData = {
-    'LightGBM': { truePositive: 502, falseNegative: 47, falsePositive: 58, trueNegative: 858 },
-    'NN': { truePositive: 490, falseNegative: 59, falsePositive: 65, trueNegative: 851 },
-    'Ensemble': { truePositive: 510, falseNegative: 39, falsePositive: 51, trueNegative: 865 },
-    'SVM': { truePositive: 480, falseNegative: 68, falsePositive: 75, trueNegative: 842 }, // Dato añadido
-    'Random Forest': { truePositive: 498, falseNegative: 51, falsePositive: 60, trueNegative: 856 }, // Dato añadido
+    'RANDOM FOREST': { truePositive: 498, falseNegative: 51, falsePositive: 60, trueNegative: 856 },
+    'XGBOOST': { truePositive: 505, falseNegative: 45, falsePositive: 55, trueNegative: 860 },
+    'LIGHTGBM': { truePositive: 502, falseNegative: 47, falsePositive: 58, trueNegative: 858 },
 };
 
-// Lo mismo para los datos de resumen.
+// CAMBIO: Se elimina 'candidates' de los datos de resumen.
 const allSummaryData = {
-    'LightGBM': { confirmed: 1245, candidates: 789, falsePositives: 123 },
-    'NN': { confirmed: 1230, candidates: 810, falsePositives: 117 },
-    'Ensemble': { confirmed: 1255, candidates: 780, falsePositives: 122 },
-    'SVM': { confirmed: 1190, candidates: 850, falsePositives: 112 },
-    'Random Forest': { confirmed: 1240, candidates: 795, falsePositives: 125 },
+    'RANDOM FOREST': { confirmed: 1240, falsePositives: 125 },
+    'XGBOOST': { confirmed: 1248, falsePositives: 120 },
+    'LIGHTGBM': { confirmed: 1245, falsePositives: 123 },
 };
 
-// Los datos de comparación global NO CAMBIAN.
 const modelComparisonData = [
-    { name: 'LightGBM', Accuracy: 0.98, Precision: 0.97, Recall: 0.96, 'F1-Score': 0.97 },
-    { name: 'NN', Accuracy: 0.96, Precision: 0.94, Recall: 0.97, 'F1-Score': 0.95 },
-    { name: 'Ensemble', Accuracy: 0.99, Precision: 0.98, Recall: 0.98, 'F1-Score': 0.98 },
-    { name: 'SVM', Accuracy: 0.94, Precision: 0.91, Recall: 0.93, 'F1-Score': 0.92 },
-    { name: 'Random Forest', Accuracy: 0.97, Precision: 0.96, Recall: 0.95, 'F1-Score': 0.96 },
+    { name: 'RANDOM FOREST', Accuracy: 0.97, Precision: 0.96, Recall: 0.95, 'F1-Score': 0.96 },
+    { name: 'XGBOOST', Accuracy: 0.985, Precision: 0.982, Recall: 0.961, 'F1-Score': 0.97 },
+    { name: 'LIGHTGBM', Accuracy: 0.987, Precision: 0.987, Recall: 0.965, 'F1-Score': 0.97 },
 ];
 
 // --- Componentes Internos (sin cambios) ---
 const MetricCard = ({ title, value }) => (
     <div className="bg-[#0A141A]/50 p-4 rounded-lg border border-[#2C3C50] text-center">
-        <p className="text-sm text-gray-400 uppercase tracking-wider">{title}</p>
+        <p className="text-base text-gray-300 uppercase tracking-wider">{title}</p>
         <p className="text-3xl lg:text-4xl font-bold text-[#00CC99] mt-2">{value}</p>
     </div>
 );
 
 const SummaryCard = ({ title, value }) => (
     <div className="bg-[#0A141A]/50 p-6 rounded-lg border border-[#2C3C50] text-center">
-        <p className="text-md text-gray-300">{title}</p>
+        <p className=" text-base text-gray-300">{title}</p>
         <p className="text-5xl font-bold text-[#00CC99] mt-4">{value}</p>
     </div>
 );
@@ -74,7 +62,7 @@ const ConfusionMatrix = ({ data }) => {
         <div className="flex items-center justify-center space-x-4 font-montserrat p-4">
             {/* Etiquetas del Eje Y (Verdadero) */}
             <div className="flex items-center space-x-4">
-                <p className="transform -rotate-90 text-gray-400 text-sm tracking-wider">Verdadero</p>
+                <p className="transform -rotate-90 text-gray-200 text-sm tracking-wider">TRUE</p>
                 <div className="flex flex-col space-y-20 text-right text-xs text-gray-300">
                     <span>{labels[0]}</span>
                     <span>{labels[1]}</span>
@@ -95,7 +83,7 @@ const ConfusionMatrix = ({ data }) => {
                     <span>{labels[0]}</span>
                     <span>{labels[1]}</span>
                 </div>
-                <p className="mt-2 text-gray-400 text-sm tracking-wider">Predicho</p>
+                <p className="mt-2 text-gray-200 text-sm tracking-wider">FORETOLD</p>
             </div>
         </div>
     );
@@ -105,7 +93,7 @@ const Results = () => {
 
     // CAMBIO 1: Añadimos un estado para guardar el modelo seleccionado.
     // 'Ensemble' es el valor por defecto al cargar la página.
-    const [selectedModel, setSelectedModel] = useState('Ensemble');
+    const [selectedModel, setSelectedModel] = useState('LIGHTGBM');
 
     // Obtenemos los datos específicos para el modelo seleccionado.
     const currentMetrics = allMetricsData[selectedModel];
@@ -181,9 +169,8 @@ const Results = () => {
                                     </div>
                                     <div className="space-y-8">
                                         {/* Las tarjetas de resumen ahora también son dinámicas */}
-                                        <SummaryCard title="Exoplanetas Confirmados" value={currentSummary.confirmed} />
-                                        <SummaryCard title="Candidatos Identificados" value={currentSummary.candidates} />
-                                        <SummaryCard title="Falsos Positivos Descartables" value={currentSummary.falsePositives} />
+                                        <SummaryCard title="Exoplanets" value={currentSummary.confirmed} />
+                                        <SummaryCard title="Non-Exoplanets" value={currentSummary.falsePositives} />
                                     </div>
                                 </div>
                             </div>

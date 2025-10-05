@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
 import DataExploration from './pages/DataExploration';
 import Results from './pages/Results';
+import Classification from './pages/Classification';
 
 // --- Componentes de Marcador de Posición (Placeholders) ---
 // Puedes mover estos a sus propios archivos en la carpeta /pages cuando los construyas.
@@ -17,7 +18,6 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
-const Classification = () => <PlaceholderPage title="Classification" />;
 const LightCurves = () => <PlaceholderPage title="Light Curves" />;
 const Login = () => <PlaceholderPage title="Login" />;
 // Esta es una ruta de ejemplo para la página de detalles de un planeta

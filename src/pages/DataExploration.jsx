@@ -236,12 +236,12 @@ const DataExploration = () => {
                                     </div>
                                     <div className="flex items-center justify-between pt-4 text-sm text-gray-400">
                                         <div className="flex items-center gap-2">
-                                            <span>Filas por página:</span>
+                                            <span>Rows per page:</span>
                                             <select value={rowsPerPage} onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="bg-[#0A141A] border border-[#2C3C50] rounded-md px-2 py-1">
                                                 {[10, 20, 50].map(size => <option key={size} value={size}>{size}</option>)}
                                             </select>
                                         </div>
-                                        <span>Página <strong>{currentPage} de {totalPages}</strong></span>
+                                        <span>Page <strong>{currentPage} of {totalPages}</strong></span>
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-1 disabled:opacity-50"><ChevronsLeft /></button>
                                             <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="p-1 disabled:opacity-50"><ChevronLeft /></button>
@@ -280,14 +280,14 @@ const DataExploration = () => {
                                     </div>
                                     <div className="bg-[#0A141A] p-4 rounded-md border border-[#2C3C50]">
                                         <h3 className="font-semibold m-4">Global Classification Proportion</h3>
-                                        <ResponsiveContainer width="100%" height={230}>
+                                        <ResponsiveContainer width="100%" height={240}>
                                             <PieChart margin={{ top: 20, right: 5, bottom: 5, left: 5 }}>
                                                     <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                                                         {chartData.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={COLORS[entry.name]} />
                                                         ))}
                                                     </Pie>
-                                                      <Tooltip content={<CustomPieChatTooltip COLORS={COLORS} />} />
+                                                    <Tooltip content={<CustomPieChatTooltip COLORS={COLORS} />} />
                                                 <Legend />
                                             </PieChart>
                                         </ResponsiveContainer>
