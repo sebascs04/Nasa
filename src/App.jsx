@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import DataExploration from './pages/DataExploration';
 import Results from './pages/Results';
 import Classification from './pages/Classification';
+import Curves from './pages/Curves';
 
 // --- Componentes de Marcador de Posición (Placeholders) ---
 // Puedes mover estos a sus propios archivos en la carpeta /pages cuando los construyas.
@@ -18,7 +19,6 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
-const LightCurves = () => <PlaceholderPage title="Light Curves" />;
 const Login = () => <PlaceholderPage title="Login" />;
 // Esta es una ruta de ejemplo para la página de detalles de un planeta
 const PlanetDetail = () => <PlaceholderPage title="Planet Detail Page" />;
@@ -37,7 +37,7 @@ function App() {
         {/* Rutas para las demás secciones de tu aplicación */}
         <Route path="/dataexploration" element={<DataExploration />} />
         <Route path="/classify" element={<Classification />} />
-        <Route path="/curves" element={<LightCurves />} />
+        <Route path="/curves" element={<Curves />} />
         <Route path="/results" element={<Results />} />
         <Route path="/login" element={<Login />} />
 
