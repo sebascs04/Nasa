@@ -19,36 +19,18 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
-const Login = () => <PlaceholderPage title="Login" />;
-// Esta es una ruta de ejemplo para la página de detalles de un planeta
-const PlanetDetail = () => <PlaceholderPage title="Planet Detail Page" />;
 
-
-// --- Componente Principal de la App ---
 
 function App() {
   return (
-    <Router>
-      {/* Puedes agregar aquí un Navbar si quieres que sea visible en TODAS las páginas */}
+    <Router  basename="/Nasa/">
       <Routes>
-        {/* Ruta principal */}
         <Route path="/" element={<Home />} />
-
-        {/* Rutas para las demás secciones de tu aplicación */}
         <Route path="/dataexploration" element={<DataExploration />} />
         <Route path="/classify" element={<Classification />} />
         <Route path="/curves" element={<Curves />} />
         <Route path="/results" element={<Results />} />
-        <Route path="/login" element={<Login />} />
-
-        {/* Ruta dinámica para mostrar detalles de un planeta específico */}
-        {/* El :planetName es un parámetro que puedes leer en tu componente */}
-        <Route path="/explore/:planetName" element={<PlanetDetail />} />
-
-        {/* Una ruta "catch-all" para páginas no encontradas podría ir aquí */}
-        {/* <Route path="*" element={<NotFoundPage />} /> */}
       </Routes>
-      {/* Puedes agregar aquí un Footer si quieres que sea visible en TODAS las páginas */}
     </Router>
   );
 }
