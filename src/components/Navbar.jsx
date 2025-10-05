@@ -15,7 +15,7 @@ const Navbar = () => {
 
     return (
         <div className='mt-10 w-full px-4'>
-            <div className='max-w-7xl mx-auto font-roboto text-[21px] border-[#141E2A]/80 border-2 rounded-md'>
+            <div className='max-w-7xl mx-auto font-montserrat text-[21px] border-[#141E2A]/80 border-2 rounded-md'>
                 <header className="sticky top-0 z-50 px-8 py-3 bg-[#141E2A]/80 backdrop-blur-sm">
                     <nav className="flex items-center justify-between">
                         {/* Bloque 1: Logo (se va a la izquierda) */}
@@ -29,15 +29,14 @@ const Navbar = () => {
                         <div className="flex gap-x-5">
                             <NavLink to="/" className={getNavLinkClass}>Home</NavLink>
                             <NavLink to="/dataexploration" className={getNavLinkClass}>Data Exploration</NavLink>
-                            <NavLink to="/classify" className={getNavLinkClass}>Classification</NavLink>
+                            <NavLink to="/classify" className={getNavLinkClass}>Exo-Detector</NavLink>
                             <NavLink to="/curves" className={getNavLinkClass}>Light Curves</NavLink>
                             <NavLink to="/results" className={getNavLinkClass}>Results</NavLink>
                         </div>
 
                         {/* Bloque 3: Botón de Login (se va a la derecha) */}
-                        <NavLink to="/login" className={getNavLinkClass}>
-                            Log In
-                        </NavLink>
+                        <div>
+                        </div>
                     </nav>
                 </header>
             </div>

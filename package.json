@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
     "axios": "^1.12.2",
+    "framer-motion": "^12.23.22",
     "lucide-react": "^0.544.0",
     "papaparse": "^5.5.3",
     "react": "^18.3.1",
