@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar';
 import { Link } from 'react-router-dom';
 import fondoGlobal from '../assets/fondo_global.jpg';
-import { LineChart, Orbit } from 'lucide-react'; // Asegúrate de tener lucide-react instalado
+import { LineChart, Orbit ,BrainCog } from 'lucide-react'; // Asegúrate de tener lucide-react instalado
 
 
 const Home = () => {
@@ -76,10 +76,10 @@ const Home = () => {
 
                                 {/* Botones */}
                                 <div className="w-full md:w-2/5 flex items-center gap-6">
-                                    <Link to="/dataexploration"
+                                   <Link to="/results"
                                         className="flex-grow h-18 flex items-center justify-center space-x-4 border-2 border-[#00CC99] rounded-lg p-6 text-[#00CC99] hover:bg-[#00CC99] hover:text-[#0A141A] transition-all duration-300">
-                                        <span className="text-2xl font-medium font-montserrat"> ANALYZE </span>
-                                        <LineChart className="h-8 w-8" />
+                                        <span className="text-2xl font-medium font-montserrat"> MODELS </span>
+                                        <BrainCog className="h-8 w-8" />
                                     </Link>
 
                                     <Link to="/classify"
