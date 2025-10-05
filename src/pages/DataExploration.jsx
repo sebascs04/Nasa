@@ -175,7 +175,7 @@ const DataExploration = () => {
                 <Navbar />
                 
                 <main className="flex-grow p-4 md:p-8">
-                    <div className="max-w-[1600px] mx-auto bg-[#141E2A]/80 backdrop-blur-md border border-[#2C3C50] rounded-lg p-6">
+                    <div className="max-w-[1600px] mx-auto bg-[#141E2A]/80 backdrop-blur-md border border-[#141E2A]/80 rounded-lg p-6">
                         <h1 className="text-2xl font-bold font-montserrat mb-6">Exoplanet Data Exploration</h1>
                         
                         {loading ? (
