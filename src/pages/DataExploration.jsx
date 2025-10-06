@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar'; // Ahora este componente existe
 // --- API Helper ---
 
 const getExoplanetData = () => {
-    const apiUrl = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+toi,+tfopwg_disp,+pl_rade,+pl_eqt,+pl_insol,+st_dist+from+toi&format=json';
+    const apiUrl = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+200+toi,+tfopwg_disp,+pl_rade,+pl_eqt,+pl_insol,+st_dist+from+toi&format=json';
     return axios.get(apiUrl);
 };
 
