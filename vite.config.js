@@ -10,5 +10,18 @@ export default defineConfig({
     tailwindcss(),
   ],
   base: '/', 
+  server: {
+    proxy: {
+      // Cualquier petición a '/api' será redirigida
+      '/api': {
+        // La URL del servidor de la NASA
+        target: 'https://exoplanetarchive.ipac.caltech.edu',
+        // Esto es necesario para que el servidor de la NASA acepte la petición
+        changeOrigin: true,
+        // Reescribimos la URL para quitar '/api' antes de enviarla
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })
 

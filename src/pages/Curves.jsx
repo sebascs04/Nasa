@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, Legend, ReferenceLine, ReferenceDot } from 'recharts';
 import Csv from '../assets/csv.png';
 import { UploadCloud, ChevronDown, FileText, X, Activity } from 'lucide-react';
+import Papa from 'papaparse';
+import axios from "axios";
 
 const initialFluxData = Array.from({ length: 300 }, (_, i) => ({
     name: `FLUX.${i + 1}`,
@@ -50,30 +52,195 @@ const Curves = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [threshold, setThreshold] = useState(0.2);
     const [starId, setStarId] = useState('Example flux Variation of Star'); // Para el título del gráfico
-
+    const [predictionResult, setPredictionResult] = useState(null);
     const handleDropzoneClick = () => fileInputRef.current.click();
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setUploadedFile(file);            
+            setUploadedFile(file);
+            setPredictionResult(null);
         }
     };
 
-    // Esta función ahora actualiza la variación de flujo
-    const handleProcessCurve = () => {
-        setIsProcessing(true);
-        setTimeout(() => {
-            setStarId('Variation of the flux of your star');
-            setFluxData(updatedFluxData); // Actualiza el gráfico de arriba con nuevos datos
-            setIsProcessing(false);
-        }, 2000);
+    const processCSVData = (csvData) => {
+        try {
+            // Verificar que hay al menos 2 filas (incluyendo header)
+            if (csvData.length < 2) {
+                console.error('El CSV debe tener al menos una fila de datos además del header');
+                return initialFluxData;
+            }
+
+            // Obtener la segunda fila (índice 1, la primera fila de datos)
+            const secondRow = csvData[1];
+
+            // Obtener todas las claves (columnas) del CSV
+            const allColumns = Object.keys(secondRow);
+
+            // Filtrar para excluir la primera columna (label) y obtener solo las columnas FLUX
+            // La primera columna generalmente será index 0, así que tomamos desde index 1 en adelante
+            const fluxColumns = allColumns.filter((column, index) => {
+                // Excluir la primera columna (índice 0) que es el label
+                if (index === 0) return false;
+
+                // Solo incluir columnas que contengan "FLUX" o sean numéricas
+                return column.toLowerCase().includes('flux') ||
+                    (column.startsWith('FLUX') && !isNaN(parseFloat(secondRow[column])));
+            });
+
+            console.log(`Procesando ${fluxColumns.length} columnas de flujo de un total de ${allColumns.length} columnas`);
+
+            // Convertir los datos a formato para el gráfico
+            const processedData = fluxColumns.map((column, index) => ({
+                name: column, // Mantener el nombre original (FLUX.1, FLUX.2, etc.)
+                value: parseFloat(secondRow[column]) || 0
+            }));
+
+            // Si tenemos demasiados puntos (más de 1000), podemos hacer downsampling para mejor rendimiento
+            let finalData = processedData;
+            if (processedData.length > 1000) {
+                // Tomar cada n-ésimo punto para reducir la densidad
+                const step = Math.ceil(processedData.length / 500); // Reducir a ~500 puntos
+                finalData = processedData.filter((_, index) => index % step === 0);
+                console.log(`Aplicando downsampling: de ${processedData.length} a ${finalData.length} puntos`);
+            }
+
+            return finalData.length > 0 ? finalData : initialFluxData;
+
+        } catch (error) {
+            console.error('Error procesando los datos del CSV:', error);
+            return initialFluxData;
+        }
     };
+
+    // Función actualizada para procesar la curva con datos reales del CSV
+    const handleProcessCurve = async () => {
+        if (!uploadedFile) {
+            console.error('No hay archivo para procesar');
+            return;
+        }
+
+        setIsProcessing(true);
+        setPredictionResult(null);
+
+        try {
+            // Crear FormData para enviar el archivo a la API de predicción
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+
+            // Llamada a la API de predicción de curva de luz
+            const apiResponse = await axios.post(
+                `https://apispaceesoplaneta.purplehill-6cd9a9e6.brazilsouth.azurecontainerapps.io/predict_ligth_curve?threshold=${threshold}`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            console.log('API Response:', apiResponse.data);
+
+            // Procesar también el archivo CSV para el gráfico
+            Papa.parse(uploadedFile, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false,
+                complete: (results) => {
+                    try {
+                        if (results.errors.length > 0) {
+                            console.warn('Errores al parsear CSV:', results.errors);
+                        }
+
+                        console.log('CSV parseado exitosamente:', {
+                            totalRows: results.data.length,
+                            totalColumns: results.meta.fields ? results.meta.fields.length : 'unknown',
+                            firstRowKeys: Object.keys(results.data[0] || {}).length
+                        });
+
+                        // Procesar los datos y actualizar el gráfico
+                        const newFluxData = processCSVData(results.data);
+
+                        // Procesar el resultado de la API
+                        const apiResult = apiResponse.data;
+                        let firstPrediction = null;
+
+                        if (apiResult.predictions && apiResult.predictions.length > 0) {
+                            // Tomar el primer resultado
+                            const firstResult = apiResult.predictions[0];
+                            firstPrediction = {
+                                classification: firstResult.classification || (firstResult.prediction === 1 ? 'CONFIRMED' : 'FALSE_POSITIVE'),
+                                confidence: firstResult.confidence || null,
+                                threshold: threshold
+                            };
+                        } else if (apiResult.prediction !== undefined) {
+                            // Si la respuesta es directa (un solo resultado)
+                            firstPrediction = {
+                                classification: apiResult.prediction === 1 ? 'CONFIRMED' : 'FALSE_POSITIVE',
+                                confidence: apiResult.confidence || null,
+                                threshold: threshold
+                            };
+                        }
+
+                        setTimeout(() => {
+                            setStarId('Variation of the flux of your star');
+                            setFluxData(newFluxData);
+                            setPredictionResult(firstPrediction);
+                            setIsProcessing(false);
+                        }, 1500);
+
+                    } catch (error) {
+                        console.error('Error procesando el archivo:', error);
+                        setTimeout(() => {
+                            setStarId('Error processing file - showing example data');
+                            setFluxData(initialFluxData);
+                            setPredictionResult(null);
+                            setIsProcessing(false);
+                        }, 1000);
+                    }
+                },
+                error: (error) => {
+                    console.error('Error leyendo el archivo CSV:', error);
+                    setTimeout(() => {
+                        setStarId('Error reading file - showing example data');
+                        setFluxData(initialFluxData);
+                        setPredictionResult(null);
+                        setIsProcessing(false);
+                    }, 1000);
+                }
+            });
+
+        } catch (error) {
+            console.error('Error en la llamada a la API:', error);
+
+            // Si hay error en la API, al menos procesar el CSV para el gráfico
+            Papa.parse(uploadedFile, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false,
+                complete: (results) => {
+                    const newFluxData = processCSVData(results.data);
+                    setTimeout(() => {
+                        setStarId('Variation of the flux of your star (API Error)');
+                        setFluxData(newFluxData);
+                        setPredictionResult({
+                            error: 'Error connecting to prediction API',
+                            threshold: threshold
+                        });
+                        setIsProcessing(false);
+                    }, 1000);
+                }
+            });
+        }
+    };
+
+
 
     const clearFile = () => {
         setUploadedFile(null);
         setFluxData(initialFluxData); // Vuelve a los datos originales
         setStarId('Example flux Variation of Star');
+        setPredictionResult(null);
         fileInputRef.current.value = null;
     };
     
@@ -87,8 +254,18 @@ const Curves = () => {
                 <div className="relative z-10 flex flex-col min-h-screen">
                     <Navbar />
                     <main className="flex-grow p-4 md:p-8">
-                        <div className="max-w-7xl mx-auto space-y-8">
-
+                            <div className="max-w-7xl mx-auto space-y-8">
+                                <div className='flex flex-col md:flex-row justify-around gap-8'>
+                                <div className="bg-[#0A141A]/50 backdrop-blur-sm p-6 rounded-lg border border-[#2C3C50] flex-1">
+                                    <h3 className="font-bold text-lg text-[#00CC99] mb-2 font-montserrat">What is Flux Variation?</h3>
+                                    <p className="text-sm text-gray-300 font-montserrat">This chart displays the individual brightness measurements ('flux') of a star over time, like frames in a movie. The dips and peaks in this raw data are the fundamental signals our AI analyzes to find the tell-tale dimming caused by a transiting exoplanet.</p>
+                                </div>
+                                <div className="bg-[#0A141A]/50 backdrop-blur-sm p-6 rounded-lg border border-[#2C3C50] flex-1">
+                                    <h3 className="font-bold text-lg text-[#00CC99] mb-2 font-montserrat">What is the Threshold Chart?</h3>
+                                    <p className="text-sm text-gray-300 font-montserrat">This chart shows the trade-off our model makes. The **Threshold** is the confidence level we require to classify a signal as an exoplanet. A lower threshold finds more planets (high **Recall**) but might make more mistakes (high **FPR**). This tool lets you find the perfect balance.</p>
+                                </div>
+                            </div>
+                            
                             <div className="bg-[#0A141A]/50 backdrop-blur-sm p-6 rounded-lg border border-[#2C3C50]">
                                 <div className="flex items-center space-x-3 mb-4">
                                     <Activity className="text-[#00CC99]" />
@@ -151,6 +328,74 @@ const Curves = () => {
                                         )}
                                     </div>
                                 </div>
+                                
+                                {/* Nueva sección de resultado de predicción */}
+                                {predictionResult && (
+                                    <div className="bg-[#0A141A]/50 backdrop-blur-sm p-6 rounded-lg border border-[#2C3C50]">
+                                        <h3 className="text-lg font-bold font-montserrat mb-4">LIGHT CURVE PREDICTION</h3>
+                                        <div className="bg-black/20 p-6 rounded-lg border border-[#2C3C50]">
+                                            {predictionResult.error ? (
+                                                <div className="flex items-center space-x-3 text-red-400">
+                                                    <AlertTriangle size={24} />
+                                                    <div>
+                                                        <p className="font-semibold">API Error</p>
+                                                        <p className="text-sm text-gray-400">{predictionResult.error}</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    <div className="flex font-montserrat items-center space-x-3">
+                                                        {predictionResult.classification === 'CONFIRMED' ? (
+                                                            <CheckCircle size={28} className="text-teal-400" />
+                                                        ) : (
+                                                            <X size={28} className="text-orange-400" />
+                                                        )}
+                                                        <div>
+                                                            <h4 className={`text-xl font-bold ${
+                                                                predictionResult.classification === 'CONFIRMED'
+                                                                    ? 'text-teal-400'
+                                                                    : 'text-orange-400'
+                                                            }`}>
+                                                                {predictionResult.classification === 'CONFIRMED'
+                                                                    ? 'EXOPLANET CONFIRMED'
+                                                                    : 'NON-EXOPLANET'}
+                                                            </h4>
+                                                            <p className="text-gray-400">Light curve analysis result</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid font-montserrat grid-cols-2 gap-4 text-sm">
+                                                        <div className="bg-black/30 p-3 rounded-md">
+                                                            <p className="text-gray-400">Threshold Used</p>
+                                                            <p className="font-semibold text-white">{predictionResult.threshold.toFixed(2)}</p>
+                                                        </div>
+                                                        {predictionResult.confidence && (
+                                                            <div className="bg-black/30 p-3 rounded-md">
+                                                                <p className="text-gray-400">Confidence</p>
+                                                                <p className="font-semibold text-[#00CC99]">
+                                                                    {(predictionResult.confidence * 100).toFixed(1)}%
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={`p-3 font-montserrat rounded-md border-l-4 ${
+                                                        predictionResult.classification === 'CONFIRMED'
+                                                            ? 'bg-teal-500/10 border-teal-400 text-teal-300'
+                                                            : 'bg-orange-500/10 border-orange-400 text-orange-300'
+                                                    }`}>
+                                                        <p className="text-sm font-montserrat">
+                                                            {predictionResult.classification === 'CONFIRMED'
+                                                                ? 'Based on the provided light curve data and the selected threshold, our model has identified a periodic dimming pattern consistent with an exoplanet transit. The signal\'s characteristics strongly suggest the presence of a planetary body.'
+                                                                : 'Based on the provided data, our model did not detect a clear, periodic signal that meets the criteria for an exoplanet transit at the selected threshold. The variations in flux appear to be stellar noise or other non-planetary phenomena.'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="bg-[#0A141A]/50 backdrop-blur-sm p-6 rounded-lg border border-[#2C3C50]">
                                     <h3 className="text-lg font-bold font-montserrat mb-4">Variation of FPR and Recall depending on the Threshold</h3>
@@ -180,7 +425,7 @@ const Curves = () => {
                                             step="0.01"
                                             value={threshold}
                                             onChange={(e) => setThreshold(parseFloat(e.target.value))}
-                                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00CC99]"
+                                            className="w-full h-2  bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00CC99]"
                                         />
                                     </div>
                                     

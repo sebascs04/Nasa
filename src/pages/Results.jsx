@@ -4,29 +4,51 @@ import { ChevronDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 const allMetricsData = {
-    'RANDOM FOREST': { accuracy: '97.8%', precision: '96.9%', recall: '95.8%', auc: '0.98', f1Score: '0.96' },
-    'XGBOOST': { accuracy: '98.5%', precision: '98.2%', recall: '96.1%', auc: '0.99', f1Score: '0.97' },
-    'LIGHTGBM': { accuracy: '98.7%', precision: '98.7%', recall: '96.5%', auc: '0.99', f1Score: '0.97' },
+    'RANDOM FOREST': { accuracy: '81.82%', precision: '96.9%', recall: '95.8%', auc: '0.91', f1Score: '0.82' },
+    'XGBOOST': { accuracy: '82.5%', precision: '83.27%', recall: '82.95%', auc: '0.90', f1Score: '0.84' },
+    'LIGHTGBM': { accuracy: '84.38%', precision: '84.55%', recall: '84.38%', auc: '0.90', f1Score: '0.84' },
 };
 
 const allConfusionMatrixData = {
-    'RANDOM FOREST': { truePositive: 498, falseNegative: 51, falsePositive: 60, trueNegative: 856 },
-    'XGBOOST': { truePositive: 505, falseNegative: 45, falsePositive: 55, trueNegative: 860 },
-    'LIGHTGBM': { truePositive: 502, falseNegative: 47, falsePositive: 58, trueNegative: 858 },
+    'RANDOM FOREST': { truePositive: 125, falseNegative: 40, falsePositive: 24, trueNegative: 163 },
+    'XGBOOST': { truePositive: 125, falseNegative: 40, falsePositive: 20, trueNegative: 167 },
+    'LIGHTGBM': { truePositive: 130, falseNegative: 35, falsePositive: 20, trueNegative: 167 },
 };
 
 // CAMBIO: Se elimina 'candidates' de los datos de resumen.
 const allSummaryData = {
-    'RANDOM FOREST': { confirmed: 1240, falsePositives: 125 },
-    'XGBOOST': { confirmed: 1248, falsePositives: 120 },
-    'LIGHTGBM': { confirmed: 1245, falsePositives: 123 },
+    'RANDOM FOREST': { confirmed: 1267, falsePositives: 1295 },
+    'XGBOOST': { confirmed: 1267, falsePositives: 1295 },
+    'LIGHTGBM': { confirmed: 1267, falsePositives: 1295 },
 };
 
 const modelComparisonData = [
-    { name: 'RANDOM FOREST', Accuracy: 0.97, Precision: 0.96, Recall: 0.95, 'F1-Score': 0.96 },
-    { name: 'XGBOOST', Accuracy: 0.985, Precision: 0.982, Recall: 0.961, 'F1-Score': 0.97 },
-    { name: 'LIGHTGBM', Accuracy: 0.987, Precision: 0.987, Recall: 0.965, 'F1-Score': 0.97 },
+    { name: 'RANDOM FOREST', Accuracy: 0.8182, Precision: 0.969, Recall: 0.958, 'F1-Score': 0.82 },
+    { name: 'XGBOOST', Accuracy: 0.825, Precision: 0.8327, Recall: 0.8295, 'F1-Score': 0.84 },
+    { name: 'LIGHTGBM', Accuracy: 0.8438, Precision: 0.8455, Recall: 0.8438, 'F1-Score': 0.84 },
 ];
+
+const modelDescriptions = {
+    'RANDOM FOREST': {
+        title: "About Random Forest",
+        text: "This model acts like a committee of decision-makers. It builds multiple 'decision trees' and combines their votes to make a final prediction. It's robust against overfitting and excellent for understanding which features are most important in a classification task."
+    },
+    'XGBOOST': {
+        title: "About XGBoost",
+        text: "eXtreme Gradient Boosting is a high-performance model known for its speed and accuracy. It builds trees sequentially, with each new tree correcting the errors of the previous one. This 'boosting' process makes it a powerful and widely-used algorithm in competitive data science."
+    },
+    'LIGHTGBM': {
+        title: "About LightGBM",
+        text: "LightGBM is another gradient boosting framework that prioritizes efficiency. It grows trees leaf-wise rather than level-wise, which often leads to faster training times and lower memory usage without sacrificing accuracy, making it ideal for large datasets."
+    }
+};
+const metricInterpretations = {
+    accuracy: (value) => `This model correctly classifies exoplanets and non-exoplanets ${value} of the time. It provides a general measure of its overall performance.`,
+    precision: (value) => `When this model predicts a signal is an 'Exoplanet', it is correct ${value} of the time. High precision means fewer false alarms.`,
+    recall: (value) => `Of all the actual exoplanets in the dataset, this model successfully found ${value}. High recall means the model misses very few true exoplanets.`,
+    f1Score: (value) => `The F1-Score is ${value}, representing a weighted average of Precision and Recall. It's the best single metric for evaluating the model's overall balance.`
+};
+
 
 // --- Componentes Internos (sin cambios) ---
 const MetricCard = ({ title, value }) => (
@@ -88,6 +110,50 @@ const ConfusionMatrix = ({ data }) => {
         </div>
     );
 };
+
+const ModelInterpretation = ({ modelName, metrics }) => {
+    const description = modelDescriptions[modelName];
+
+    if (!description) return null;
+
+    return (
+        <div className="bg-[#0A141A]/50 p-6 rounded-lg border border-[#2C3C50] space-y-4">
+            {/* Parte 1: Descripción general del modelo */}
+            <div>
+                <h4 className="font-semibold text-lg text-[#00CC99] mb-2">{description.title}</h4>
+                <p className="text-sm text-gray-400 leading-relaxed">{description.text}</p>
+            </div>
+
+            {/* Divisor visual */}
+            <div className="border-t border-gray-700"></div>
+
+            {/* Parte 2: Interpretación de las métricas específicas */}
+            <div>
+                <h4 className="font-semibold text-lg text-[#00CC99] mb-2">Interpreting {modelName} Metrics</h4>
+                <div className="space-y-3">
+                    <div>
+                        <p className="font-bold text-gray-200 text-sm">Accuracy:</p>
+                        <p className="text-sm text-gray-400 leading-relaxed">{metricInterpretations.accuracy(metrics.accuracy)}</p>
+                    </div>
+                    <div>
+                        <p className="font-bold text-gray-200 text-sm">Precision:</p>
+                        <p className="text-sm text-gray-400 leading-relaxed">{metricInterpretations.precision(metrics.precision)}</p>
+                    </div>
+                    <div>
+                        <p className="font-bold text-gray-200 text-sm">Recall:</p>
+                        <p className="text-sm text-gray-400 leading-relaxed">{metricInterpretations.recall(metrics.recall)}</p>
+                    </div>
+                    <div>
+                        <p className="font-bold text-gray-200 text-sm">F1-Score:</p>
+                        <p className="text-sm text-gray-400 leading-relaxed">{metricInterpretations.f1Score(metrics.f1Score)}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 
 const Results = () => {
 
@@ -171,6 +237,7 @@ const Results = () => {
                                         {/* Las tarjetas de resumen ahora también son dinámicas */}
                                         <SummaryCard title="Exoplanets" value={currentSummary.confirmed} />
                                         <SummaryCard title="Non-Exoplanets" value={currentSummary.falsePositives} />
+                                        <ModelInterpretation modelName={selectedModel} metrics={currentMetrics} />
                                     </div>
                                 </div>
                             </div>

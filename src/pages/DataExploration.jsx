@@ -1,53 +1,52 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ResponsiveContainer, BarChart, Bar, ScatterChart, Scatter, PieChart, Pie, Cell, XAxis, YAxis, ZAxis, Tooltip, Legend } from 'recharts';
-import { Search, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, Rocket, Info } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Ahora este componente existe
 
-// --- Datos Simulados (Mock Data) ---
-const getMockData = () => new Promise(resolve => {
-    setTimeout(() => {
-        const sampleData = Array.from({ length: 150 }, (_, i) => ({
-            id: i + 1,
-            koi_disposition: ['CONFIRMED', 'CANDIDATE', 'FALSE POSITIVE'][Math.floor(Math.random() * 3)],
-            koi_period: parseFloat((Math.random() * 20).toFixed(2)),
-            koi_prad: parseFloat((Math.random() * 15 + 0.5).toFixed(2)),
-            koi_depth: Math.floor(Math.random() * 1000) + 100,
-            koi_steff: Math.floor(Math.random() * 2000) + 4000,
-        }));
-        resolve({ data: sampleData });
-    }, 1500);
-});
+// --- API Helper ---
+
+const getExoplanetData = () => {
+    const apiUrl = '/api/TAP/sync?query=select+top+200+toi,+tfopwg_disp,+pl_rade,+pl_eqt,+pl_insol,+st_dist+from+toi&format=json';
+    return axios.get(apiUrl);
+};
 
 // --- Componente para la Píldora de Estado ---
 const StatusPill = ({ value }) => {
+    if (!value) return <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-700 text-gray-300">N/A</span>;
+    
     const status = value.toLowerCase();
-    let bgColor = 'bg-gray-700', textColor = 'text-gray-300';
-    if (status === 'confirmed') { bgColor = 'bg-teal-500/20'; textColor = 'text-teal-400'; }
-    if (status === 'candidate') { bgColor = 'bg-blue-500/20'; textColor = 'text-blue-400'; }
-    if (status === 'false positive') { bgColor = 'bg-orange-600/20'; textColor = 'text-orange-500'; }
+    let bgColor, textColor;
+
+    switch (status) {
+        case 'cp': // Confirmed Planet
+            bgColor = 'bg-teal-500/20'; textColor = 'text-teal-400';
+            break;
+        case 'pc': // Planetary Candidate
+            bgColor = 'bg-blue-500/20'; textColor = 'text-blue-400';
+            break;
+        case 'fp': // False Positive
+            bgColor = 'bg-orange-600/20'; textColor = 'text-orange-500';
+            break;
+        default:
+            bgColor = 'bg-gray-500/20'; textColor = 'text-gray-400';
+    }
     return <span className={`px-3 py-1 text-xs font-semibold rounded-full ${bgColor} ${textColor}`}>{value}</span>;
 };
 
-//ToolTip para el PieChart
-const CustomPieChatTooltip = ({ active, payload, label, COLORS }) => {
-    // 'active' es true cuando el usuario pasa el mouse sobre una sección
-    // 'payload' contiene la información de esa sección
+const CustomPieChatTooltip = ({ active, payload, COLORS }) => {
     if (active && payload && payload.length) {
-        const data = payload[0]; // La información del segmento actual
-        const color = COLORS[data.name]; // Obtenemos el color correspondiente desde nuestro objeto COLORS
-
+        const data = payload[0];
+        const color = COLORS[data.name];
         return (
             <div className="bg-[#141E2A] p-3 font-montserrat rounded-md border border-[#2C3C50]">
-                {/* Aplicamos el color dinámico al texto */}
                 <p className="font-semibold" style={{ color: color }}>
                     {`${data.name}: ${data.value}`}
                 </p>
             </div>
         );
     }
-
-    return null; // Si no hay hover, no mostramos nada
+    return null;
 };
 
 // Componente de Tooltip Personalizado para el Scatter Chart
@@ -78,6 +77,53 @@ const CustomScatterTooltip = ({ active, payload }) => {
     return null;
 };
 
+const InterpretationSection = () => {
+    const [activeTab, setActiveTab] = useState('dashboard');
+
+    const interpretations = {
+        dashboard: {
+            title: "Interpreting the Dashboard",
+            text: "This dashboard is your command center for exoplanet exploration. Use the main table to search and sort through thousands of TESS Objects of Interest. The charts on the right provide a high-level visual summary of the currently filtered data, helping you to quickly identify trends and outliers in the vast cosmic catalog."
+        },
+        scatter: {
+            title: "Stellar Distance vs. Planet Radius",
+            text: "This chart helps uncover relationships between a planet's size and its distance from its star. Are smaller, rocky planets more common closer to their stars? Are gas giants found further out? This visualization allows us to explore the architectural diversity of distant solar systems."
+        },
+        histogram: {
+            title: "Distribution of Planetary Radii",
+            text: "This histogram reveals the most common planet sizes within the dataset. By grouping planets into categories like 'Earth-sized' or 'Gas Giant', we get a powerful snapshot of the galactic census. A notable peak in a certain category can indicate a common planet formation mechanism."
+        },
+        pie: {
+            title: "Global Classification Proportion",
+            text: "This chart shows the outcome of the detection pipeline. Each slice represents a TESS Follow-up Observing Program (TFOPWG) disposition: CP (Confirmed Planet), PC (Planetary Candidate), FP (False Positive), KP (Known Planet), FA (False Alarm), and APC (Ambiguous Planetary Candidate). A high proportion of CPs and PCs indicates a successful survey."
+        }
+    };
+
+    const activeInterpretation = interpretations[activeTab];
+
+    return (
+        <div className="mt-6 bg-[#0A141A] p-6 rounded-md border border-[#2C3C50]">
+            <h3 className="text-xl font-bold mb-4 font-montserrat">Insights & Interpretations</h3>
+            <div className="flex flex-wrap gap-4 mb-4 border-b border-[#2C3C50] pb-4">
+                {Object.keys(interpretations).map(key => (
+                     <button 
+                        key={key} 
+                        onClick={() => setActiveTab(key)} 
+                        className={`px-4 py-2 cursor-pointer text-sm rounded-md transition-colors ${activeTab === key ? 'bg-[#00CC99] text-[#0A141A] font-bold' : 'bg-[#141E2A] hover:bg-[#2C3C50]'}`}
+                    >
+                        {interpretations[key].title}
+                    </button>
+                ))}
+            </div>
+            <div className="bg-black/20 p-4 rounded-md">
+                <h4 className="font-semibold text-[#00CC99] mb-2">{activeInterpretation.title}</h4>
+                <p className="text-gray-300 text-sm leading-relaxed">{activeInterpretation.text}</p>
+            </div>
+        </div>
+    );
+};
+
+
 // --- Componente Principal ---
 const DataExploration = () => {
     const [allData, setAllData] = useState([]);
@@ -87,48 +133,50 @@ const DataExploration = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         setLoading(true);
-        getMockData().then(res => {
-            setAllData(res.data);
-            setLoading(false);
-        });
+        setError(null);
+        getExoplanetData()
+            .then(res => {
+                const cleanedData = res.data.map(item => ({
+                    toi: item.toi,
+                    tfopwg_disp: item.tfopwg_disp || 'N/A',
+                    pl_rade: item.pl_rade === null ? 0 : item.pl_rade,
+                    pl_eqt: item.pl_eqt === null ? 0 : item.pl_eqt,
+                    pl_insol: item.pl_insol === null ? 0 : item.pl_insol,
+                    st_dist: item.st_dist === null ? 0 : item.st_dist,
+                }));
+                setAllData(cleanedData);
+            })
+            .catch(err => {
+                console.error("Error fetching API data:", err);
+                setError("Failed to load exoplanet data from the NASA archive.");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
 
-    // --- Lógica de Filtrado, Ordenamiento y Paginación (reemplaza a react-table) ---
     const processedData = useMemo(() => {
         let filtered = allData;
-
-        // Filtro de estado
         if (statusFilter !== 'All') {
-            filtered = filtered.filter(item => item.koi_disposition.replace(' ', '').toUpperCase() === statusFilter.toUpperCase());
+            filtered = filtered.filter(item => item.tfopwg_disp.toUpperCase() === statusFilter.toUpperCase());
         }
-
-        // Filtro de búsqueda global
         if (globalFilter) {
             const lowercasedFilter = globalFilter.toLowerCase();
-            filtered = filtered.filter(item => {
-                return Object.values(item).some(val => 
-                    String(val).toLowerCase().includes(lowercasedFilter)
-                );
-            });
+            filtered = filtered.filter(item => Object.values(item).some(val => 
+                String(val).toLowerCase().includes(lowercasedFilter)
+            ));
         }
-
-        // Ordenamiento
         if (sortConfig.key) {
-            // AQUÍ ESTÁ LA CORRECCIÓN: Usamos [...filtered] para crear una copia antes de ordenar
             return [...filtered].sort((a, b) => {
-                if (a[sortConfig.key] < b[sortConfig.key]) {
-                    return sortConfig.direction === 'ascending' ? -1 : 1;
-                }
-                if (a[sortConfig.key] > b[sortConfig.key]) {
-                    return sortConfig.direction === 'ascending' ? 1 : -1;
-                }
+                if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'ascending' ? -1 : 1;
+                if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'ascending' ? 1 : -1;
                 return 0;
             });
         }
-        
         return filtered;
     }, [allData, statusFilter, globalFilter, sortConfig]);
 
@@ -148,24 +196,48 @@ const DataExploration = () => {
     };
 
     const columns = [
-        { key: 'id', header: 'ID' },
-        { key: 'koi_disposition', header: 'State' },
-        { key: 'koi_period', header: 'Period (days)' },
-        { key: 'koi_prad', header: 'Radio (Earth)' },
-        { key: 'koi_depth', header: 'Depth (ppm)' },
-        { key: 'koi_steff', header: 'Star Temp. (K)' },
+        { key: 'toi', header: 'Object of Interest' },
+        { key: 'tfopwg_disp', header: 'Disposition' },
+        { key: 'pl_rade', header: 'Planet Radius (Earth)' },
+        { key: 'pl_eqt', header: 'Equilibrium Temp (K)' },
+        { key: 'pl_insol', header: 'Insolation (Earth flux)' },
+        { key: 'st_dist', header: 'Stellar Distance (pc)' },
     ];
     
     // --- Datos para los Gráficos ---
     const chartData = useMemo(() => {
         const counts = processedData.reduce((acc, curr) => {
-            acc[curr.koi_disposition] = (acc[curr.koi_disposition] || 0) + 1;
+            const disp = curr.tfopwg_disp || 'N/A';
+            acc[disp] = (acc[disp] || 0) + 1;
             return acc;
         }, {});
         return Object.entries(counts).map(([name, value]) => ({ name, value }));
     }, [processedData]);
+
+     // --- LÓGICA PARA EL NUEVO HISTOGRAMA ---
+    const radiusHistogramData = useMemo(() => {
+        const bins = {
+            'Sub-Earth (<0.8)': 0,
+            'Earth-sized (0.8-1.25)': 0,
+            'Super-Earth (1.25-2)': 0,
+            'Neptune-sized (2-6)': 0,
+            'Gas Giant (>6)': 0,
+        };
+
+        processedData.forEach(planet => {
+            const radius = planet.pl_rade;
+            if (radius < 0.8) bins['Sub-Earth (<0.8)']++;
+            else if (radius <= 1.25) bins['Earth-sized (0.8-1.25)']++;
+            else if (radius <= 2) bins['Super-Earth (1.25-2)']++;
+            else if (radius <= 6) bins['Neptune-sized (2-6)']++;
+            else bins['Gas Giant (>6)']++;
+        });
+
+        return Object.entries(bins).map(([name, count]) => ({ name, count }));
+    }, [processedData]);
+
     
-    const COLORS = { 'CONFIRMED': '#2dd4bf', 'CANDIDATE': '#38bdf8', 'FALSE POSITIVE': '#f97316' };
+    const COLORS = { 'CP': '#2dd4bf', 'PC': '#38bdf8', 'FP': '#f97316', 'N/A': '#6b7280' };
 
     return (
         <div className="relative min-h-screen text-white font-sans bg-[#141E2A]">
@@ -182,25 +254,19 @@ const DataExploration = () => {
                              <div className="flex justify-center items-center h-96">
                                 <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#00CC99]"></div>
                             </div>
+                        ) : error ? (
+                            <div className="flex justify-center items-center h-96 text-red-400">{error}</div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Columna Izquierda: Filtros y Tabla */}
                                 <div className="lg:col-span-2 space-y-4 font-montserrat">
                                     <div className="flex flex-col gap-4">
                                         <div className="relative w-full">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                            <input 
-                                                type="text"
-                                                value={globalFilter}
-                                                onChange={e => setGlobalFilter(e.target.value)}
-                                                placeholder="Search the table..."
-                                                className="w-full bg-[#0A141A] border border-[#2C3C50] rounded-md pl-10 pr-4 py-2 focus:ring-2 focus:ring-[#00CC99] focus:outline-none"
-                                            />
+                                           
                                         </div>
                                         <div className="flex items-center space-x-2 ">
-                                            {['All', 'CONFIRMED', 'CANDIDATE', 'FALSEPOSITIVE'].map(f => (
-                                                <button key={f} onClick={() => { setStatusFilter(f); setCurrentPage(1); }} className={`px-4 py-2 cursor-pointer text-sm rounded-md transition-colors ${statusFilter === f ? 'bg-[#00CC99] text-[#0A141A]' : 'bg-[#0A141A] hover:bg-[#2C3C50]'}`}>
-                                                   {f === 'FALSEPOSITIVE' ? 'FALSE POSITIVE' : f}
+                                            {['All', 'CP', 'PC', 'FP'].map(f => (
+                                                <button key={f} onClick={() => { setStatusFilter(f); setCurrentPage(1); }} className={`px-4 py-2 cursor-pointer text-sm rounded-md transition-colors ${statusFilter === f ? 'bg-[#00CC99] text-[#0A141A] font-bold' : 'bg-[#0A141A] hover:bg-[#2C3C50]'}`}>
+                                                   {f === 'CP' ? 'Confirmed' : f === 'PC' ? 'Candidate' : f === 'FP' ? 'False Positive' : 'All'}
                                                 </button>
                                             ))}
                                         </div>
@@ -212,21 +278,17 @@ const DataExploration = () => {
                                                     {columns.map(col => (
                                                         <th key={col.key} onClick={() => requestSort(col.key)} className="p-3 text-left font-semibold tracking-wider cursor-pointer">
                                                             {col.header}
-                                                            {sortConfig.key === col.key && (
-                                                                sortConfig.direction === 'ascending' ? 
-                                                                <ChevronUp className="inline ml-1 h-4 w-4"/> : 
-                                                                <ChevronDown className="inline ml-1 h-4 w-4"/>
-                                                            )}
+                                                            {sortConfig.key === col.key && (sortConfig.direction === 'ascending' ? <ChevronUp className="inline ml-1 h-4 w-4"/> : <ChevronDown className="inline ml-1 h-4 w-4"/>)}
                                                         </th>
                                                     ))}
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {paginatedData.map(row => (
-                                                    <tr key={row.id} className="border-t border-[#2C3C50] hover:bg-[#141E2A]">
+                                                {paginatedData.map((row, index) => (
+                                                    <tr key={index} className="border-t border-[#2C3C50] hover:bg-[#141E2A]">
                                                         {columns.map(col => (
                                                             <td key={col.key} className="p-3">
-                                                                {col.key === 'koi_disposition' ? <StatusPill value={row[col.key]} /> : row[col.key]}
+                                                                {col.key === 'tfopwg_disp' ? <StatusPill value={row[col.key]} /> : row[col.key]}
                                                             </td>
                                                         ))}
                                                     </tr>
@@ -235,46 +297,41 @@ const DataExploration = () => {
                                         </table>
                                     </div>
                                     <div className="flex items-center justify-between pt-4 text-sm text-gray-400">
-                                        <div className="flex items-center gap-2">
-                                            <span>Rows per page:</span>
-                                            <select value={rowsPerPage} onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="bg-[#0A141A] border border-[#2C3C50] rounded-md px-2 py-1">
-                                                {[10, 20, 50].map(size => <option key={size} value={size}>{size}</option>)}
-                                            </select>
-                                        </div>
-                                        <span>Page <strong>{currentPage} of {totalPages}</strong></span>
+                                        <span>Page <strong>{currentPage} of {totalPages || 1}</strong></span>
                                         <div className="flex items-center gap-1">
-                                            <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-1 disabled:opacity-50"><ChevronsLeft /></button>
-                                            <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="p-1 disabled:opacity-50"><ChevronLeft /></button>
-                                            <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages} className="p-1 disabled:opacity-50"><ChevronRight /></button>
-                                            <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="p-1 disabled:opacity-50"><ChevronsRight /></button>
+                                            <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-1 cursor-pointer disabled:opacity-50"><ChevronsLeft /></button>
+                                            <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="p-1  cursor-pointer disabled:opacity-50"><ChevronLeft /></button>
+                                            <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages} className="p-1 cursor-pointer disabled:opacity-50"><ChevronRight /></button>
+                                            <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage >= totalPages} className="p-1 cursor-pointer disabled:opacity-50"><ChevronsRight /></button>
                                         </div>
                                     </div>
+                                     <InterpretationSection />
                                 </div>
-                                {/* Columna Derecha: Gráficos */}
                                 <div className="space-y-6 font-montserrat">
                                     <div className="bg-[#0A141A] p-4 rounded-md border border-[#2C3C50]">
-                                        <h3 className="font-semibold mb-4">Period vs. Radius</h3>
+                                        <h3 className="font-semibold mb-4">Stellar Distance vs. Planet Radius</h3>
                                         <ResponsiveContainer width="100%" height={200}>
                                             <ScatterChart>
-                                                <XAxis type="number" dataKey="koi_period" name="Periodo" unit="d" stroke="#8892B0" />
-                                                <YAxis type="number" dataKey="koi_prad" name="Radio" unit=" R⊕" stroke="#8892B0" />
-                                                <ZAxis type="category" dataKey="koi_disposition" name="Estado" />
-                                                <Tooltip 
-                                                    cursor={{ strokeDasharray: '3 3' }} 
-                                                    content={<CustomScatterTooltip />} 
-                                                />
-                                                <Scatter name="Exoplanetas" data={processedData} fill="#00CC99" />
+                                                <XAxis type="number" dataKey="st_dist" name="Distance" unit="pc" stroke="#8892B0" />
+                                                <YAxis type="number" dataKey="pl_rade" name="Radius" unit=" R⊕" stroke="#8892B0" />
+                                                <ZAxis type="category" dataKey="tfopwg_disp" name="Disposition" />
+                                                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomScatterTooltip />} />
+                                                <Scatter data={processedData} fill="#00CC99" />
                                             </ScatterChart>
                                         </ResponsiveContainer>
                                     </div>
+                                    {/* --- GRÁFICO MEJORADO --- */}
                                     <div className="bg-[#0A141A] p-4 rounded-md border border-[#2C3C50]">
                                         <h3 className="font-semibold mb-4">Distribution of Planetary Radii</h3>
-                                        <ResponsiveContainer width="100%" height={200}>
-                                            <BarChart data={processedData}>
-                                                <XAxis dataKey="id" stroke="#8892B0" angle={-30} textAnchor="end" height={50} />
+                                        <ResponsiveContainer width="100%" height={250}>
+                                            <BarChart data={radiusHistogramData}>
+                                                <XAxis dataKey="name" stroke="#8892B0" angle={-30} textAnchor="end" height={80} interval={0} style={{ fontSize: '12px' }} />
                                                 <YAxis stroke="#8892B0" />
-                                                <Tooltip contentStyle={{ backgroundColor: '#141E2A', border: '1px solid #2C3C50' }}/>
-                                                <Bar dataKey="koi_prad" fill="#00CC99" name="Radio (Tierra)"/>
+                                                <Tooltip 
+                                                    cursor={{fill: 'rgba(44, 60, 80, 0.5)'}}
+                                                    contentStyle={{ backgroundColor: '#141E2A', border: '1px solid #2C3C50' }}
+                                                />
+                                                <Bar dataKey="count" fill="#00CC99" name="Number of Planets"/>
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -282,12 +339,12 @@ const DataExploration = () => {
                                         <h3 className="font-semibold m-4">Global Classification Proportion</h3>
                                         <ResponsiveContainer width="100%" height={240}>
                                             <PieChart margin={{ top: 20, right: 5, bottom: 5, left: 5 }}>
-                                                    <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                                                        {chartData.map((entry, index) => (
-                                                            <Cell key={`cell-${index}`} fill={COLORS[entry.name]} />
-                                                        ))}
-                                                    </Pie>
-                                                    <Tooltip content={<CustomPieChatTooltip COLORS={COLORS} />} />
+                                                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                                                    {chartData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[entry.name]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<CustomPieChatTooltip COLORS={COLORS} />} />
                                                 <Legend />
                                             </PieChart>
                                         </ResponsiveContainer>
