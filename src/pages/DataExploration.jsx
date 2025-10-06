@@ -5,11 +5,13 @@ import axios from 'axios';
 import Navbar from '../components/Navbar'; // Ahora este componente existe
 
 // --- API Helper ---
-
 const getExoplanetData = () => {
-    const apiUrl = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+200+toi,+tfopwg_disp,+pl_rade,+pl_eqt,+pl_insol,+st_dist+from+toi&format=json';
+    const originalApiUrl = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+200+toi,+tfopwg_disp,+pl_rade,+pl_eqt,+pl_insol,+st_dist+from+toi&format=json';
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const apiUrl = proxyUrl + originalApiUrl;
     return axios.get(apiUrl);
 };
+
 
 // --- Componente para la Píldora de Estado ---
 const StatusPill = ({ value }) => {
